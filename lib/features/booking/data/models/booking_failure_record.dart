@@ -22,6 +22,18 @@ sealed class BookingFailureRecord with _$BookingFailureRecord {
     Timestamp? createdAt,
   }) = _BookingFailureRecord;
 
+  const BookingFailureRecord._();
+
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'userId': userId,
+        'roomId': roomId,
+        'checkIn': checkIn,
+        'checkOut': checkOut,
+        'code': code,
+        'rawCode': rawCode,
+        'createdAt': createdAt,
+      };
+
   factory BookingFailureRecord.fromMap(Map<String, dynamic> map, {String id = ''}) =>
       BookingFailureRecord(
         id: id,

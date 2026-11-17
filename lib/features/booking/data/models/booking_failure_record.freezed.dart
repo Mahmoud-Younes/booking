@@ -212,8 +212,8 @@ return $default(_that.id,_that.userId,_that.roomId,_that.checkIn,_that.checkOut,
 /// @nodoc
 
 
-class _BookingFailureRecord implements BookingFailureRecord {
-  const _BookingFailureRecord({this.id = '', this.userId, required this.roomId, required this.checkIn, required this.checkOut, required this.code, this.rawCode = '', this.createdAt});
+class _BookingFailureRecord extends BookingFailureRecord {
+  const _BookingFailureRecord({this.id = '', this.userId, required this.roomId, required this.checkIn, required this.checkOut, required this.code, this.rawCode = '', this.createdAt}): super._();
   
 
 @override@JsonKey() final  String id;
