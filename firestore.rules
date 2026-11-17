@@ -1,0 +1,153 @@
+rules_version = '2';
+
+// Booking app security rules — the server-enforced second defense line.
+//
+// TRANSACTION INVARIANT (kept in lockstep with BookingRepo.attemptBooking):
+//   A booking is ONE Firestore transaction that (a) creates the booking
+//   document and (b) creates one night document per night of the stay at
+//   rooms/{roomId}/nights/{epochDay} referencing that booking. Two concurrent
+//   bookings for the same night target the SAME deterministic document path;
+//   night create is allowed only when the night document does not exist yet,
+//   so exactly one transaction commits and the other is rejected server-side
+//   — even from a modified client, because rules run for transactions too.
+//   Cancellation frees nights transactionally via the owner-scoped delete
+//   below. Never change one side of this contract without the other.
+//
+// NIGHT PATH = EPOCH DAY: the night document path segment is the integer
+// epoch day and the document repeats it as an int field, so rules can verify
+// path <-> field agreement with int() and bind the night to the caller's own
+// booking range via getAfter() on the booking created in the same transaction.
+//
+// PREFIX COORDINATION: the development flavor writes into `dev_`-prefixed
+// collections. Rules are static text and cannot read the Dart Env constant,
+// so the prefixed family is mirrored below as its own match tree; the rules
+// suite pins both families so drift surfaces in CI.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Bookings are created by their owner, for the future, with sane dates
+    // and the documented schema (30-night maximum, active status, policy and
+    // schema versions present).
+    function validBookingCreate(data) {
+      return isSignedIn()
+        && data.userId == request.auth.uid
+        && data.roomId is string
+        && data.checkIn is timestamp
+        && data.checkOut is timestamp
+        && data.checkInEpochDay is int
+        && data.checkOutEpochDay is int
+        && data.checkOutEpochDay > data.checkInEpochDay
+        && data.checkOutEpochDay - data.checkInEpochDay <= 30
+        && data.checkIn >= request.time - duration.value(1, 'd')
+        && data.status == 'active'
+        && data.policyVersion is int
+        && data.schemaVersion is int;
+    }
+
+    // A night document may only be created inside the same transaction that
+    // creates its booking, for the caller's own booking, at the path that
+    // matches its epoch-day field, inside that booking's stay range.
+    function isNightCreateForOwnedBooking(nightId, data) {
+      let booking = getAfter(/databases/$(database)/documents/bookings/$(data.bookingId)).data;
+      return isSignedIn()
+        && data.bookingId is string
+        && data.epochDay is int
+        && data.epochDay == int(nightId)
+        && booking.userId == request.auth.uid
+        && data.epochDay >= booking.checkInEpochDay
+        && data.epochDay < booking.checkOutEpochDay;
+    }
+
+    // Nights may only be deleted by the owner of the booking they belong to
+    // (cancellation). get() is safe here: the booking was committed earlier.
+    function isNightDeleteForOwnedBooking(data) {
+      let booking = get(/databases/$(database)/documents/bookings/$(data.bookingId)).data;
+      return isSignedIn()
+        && data.bookingId is string
+        && booking.userId == request.auth.uid;
+    }
+
+    // ------------------------------------------------------------------
+    // Production (unprefixed) collections
+    // ------------------------------------------------------------------
+
+    match /rooms/{roomId} {
+      allow read: if true;      // public catalog: guests may browse results
+      allow write: if false;    // catalog writes come from seeding only
+      match /nights/{nightId} {
+        allow read: if isSignedIn();          // availability checks
+        allow create: if resource == null
+          && isNightCreateForOwnedBooking(nightId, request.resource.data);
+        allow update: if false;
+        allow delete: if isNightDeleteForOwnedBooking(resource.data);
+      }
+    }
+
+    match /bookings/{bookingId} {
+      allow create: if validBookingCreate(request.resource.data);
+      allow read: if isUser(resource.data.userId);
+      // Owner may update (status -> cancelled); identity and shape are fixed.
+      allow update: if isUser(resource.data.userId)
+        && request.resource.data.userId == resource.data.userId;
+      allow delete: if false;   // bookings are never hard-deleted by clients
+    }
+
+    match /booking_failures/{failureId} {
+      allow create: if isSignedIn();   // best-effort diagnostics
+      allow read: if false;            // console / admin only
+      allow update, delete: if false;
+    }
+
+    match /users/{uid} {
+      allow create: if isUser(uid);
+      allow read: if isUser(uid);
+      allow update, delete: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // Development (dev_-prefixed) collections — mirror of the tree above.
+    // Keep every change here in lockstep with the production tree.
+    // ------------------------------------------------------------------
+
+    match /dev_rooms/{roomId} {
+      allow read: if true;
+      allow write: if false;
+      match /nights/{nightId} {
+        allow read: if isSignedIn();
+        allow create: if resource == null
+          && isNightCreateForOwnedBooking(nightId, request.resource.data);
+        allow update: if false;
+        allow delete: if isNightDeleteForOwnedBooking(resource.data);
+      }
+    }
+
+    match /dev_bookings/{bookingId} {
+      allow create: if validBookingCreate(request.resource.data);
+      allow read: if isUser(resource.data.userId);
+      allow update: if isUser(resource.data.userId)
+        && request.resource.data.userId == resource.data.userId;
+      allow delete: if false;
+    }
+
+    match /dev_booking_failures/{failureId} {
+      allow create: if isSignedIn();
+      allow read: if false;
+      allow update, delete: if false;
+    }
+
+    match /dev_users/{uid} {
+      allow create: if isUser(uid);
+      allow read: if isUser(uid);
+      allow update, delete: if false;
+    }
+  }
+}
