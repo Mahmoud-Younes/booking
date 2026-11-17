@@ -1,4 +1,6 @@
 import 'package:booking/core/routing/routes.dart';
+import 'package:booking/features/auth/ui/screens/login_screen.dart';
+import 'package:booking/features/auth/ui/screens/sign_up_screen.dart';
 import 'package:flutter/material.dart';
 
 /// Named-route generator (doc_doc pattern: a switch over route names).
@@ -10,8 +12,12 @@ class AppRouter {
   Route<dynamic>? generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case Routes.loginScreen:
+        return _materialRoute(settings, const LoginScreen());
+      case Routes.signUpScreen:
+        return _materialRoute(settings, const SignUpScreen());
       case Routes.homeScreen:
-        return _materialRoute(settings, _PlaceholderScreen(routeName: settings.name ?? ''));
+        return _materialRoute(
+            settings, _PlaceholderScreen(routeName: Routes.homeScreen));
       default:
         return null;
     }

@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:booking/booking_app.dart';
 import 'package:booking/core/di/dependency_injection.dart';
+import 'package:booking/core/routing/routes.dart';
 import 'package:booking/core/env/env.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:booking/firebase_options.dart';
 import 'package:flutter/foundation.dart';
@@ -26,7 +28,10 @@ Future<void> main() async {
   setupGetIt(env);
   await ScreenUtil.ensureScreenSize();
   _wireCrashReporting(env);
-  runApp(const BookingApp());
+  // Await the FIRST authStateChanges emission: a stream cannot supply a
+  // one-time initial route.
+  final User? initialUser = await getIt<FirebaseAuth>().authStateChanges().first;
+  runApp(BookingApp(startRoute: initialUser != null ? Routes.homeScreen : Routes.loginScreen));
 }
 
 /// Crashlytics is wired on Android only; the Flutter Web gap is an accepted,

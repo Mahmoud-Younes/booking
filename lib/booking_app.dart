@@ -1,5 +1,4 @@
 import 'package:booking/core/routing/app_router.dart';
-import 'package:booking/core/routing/routes.dart';
 import 'package:booking/core/theming/colors.dart';
 import 'package:booking/core/widgets/breakpoint_shell.dart';
 import 'package:flutter/material.dart';
@@ -8,8 +7,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 /// Application widget: Arabic-only RTL UI, ScreenUtil sizing against a
 /// 375x812 design, named routing, and the web breakpoint shell.
+///
+/// The start route comes from the FIRST authStateChanges emission, awaited
+/// in the entry points — a stream cannot supply a one-time initial route.
 class BookingApp extends StatelessWidget {
-  const BookingApp({super.key});
+  const BookingApp({super.key, required this.startRoute});
+
+  /// Routes.loginScreen when signed out, Routes.homeScreen when signed in.
+  final String startRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -31,9 +36,7 @@ class BookingApp extends StatelessWidget {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        // Switched to authStateChanges-driven routing when the auth feature
-        // lands; until then the login placeholder is the entry route.
-        initialRoute: Routes.loginScreen,
+        initialRoute: startRoute,
         onGenerateRoute: AppRouter().generateRoute,
         builder: (context, child) =>
             BreakpointShell(child: child ?? const SizedBox.shrink()),
