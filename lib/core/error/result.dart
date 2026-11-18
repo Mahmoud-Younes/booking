@@ -3,8 +3,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'result.freezed.dart';
 
-/// The doc_doc `ApiResult` shape adapted from Dio to Firestore: every action
-/// repo method returns a [Result] and the cubit unwraps it with `when`.
+/// A success/failure envelope for Firestore actions: every action repo method
+/// returns a [Result] and the cubit unwraps it with `when`.
 @freezed
 sealed class Result<T> with _$Result<T> {
   const factory Result.success(T data) = Success<T>;

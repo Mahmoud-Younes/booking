@@ -13,7 +13,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
 
-/// Global service locator (doc_doc pattern: get_it, manual registration).
+/// Global service locator (get_it, manual registration).
 final getIt = GetIt.instance;
 
 /// Registers every service for the selected [env].

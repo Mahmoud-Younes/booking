@@ -2,7 +2,7 @@ import 'package:booking/core/theming/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// Shared styled text form field (doc_doc pattern) with consistent borders
+/// Shared styled text form field with consistent borders
 /// and inline error rendering.
 class AppTextFormField extends StatelessWidget {
   const AppTextFormField({

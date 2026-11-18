@@ -1,4 +1,4 @@
-/// Validation regexes (doc_doc pattern).
+/// Validation regexes shared by the auth forms.
 class AppRegex {
   AppRegex._();
 
