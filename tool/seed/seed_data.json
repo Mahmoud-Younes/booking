@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
   "rooms": [
-    { "id": "room_cairo_01", "city": "القاهرة", "title": "غرفة فندقية بإطلالة على النيل", "pricePerNight": 850, "capacity": 2, "imageUrl": "https://picsum.photos/seed/roomcairo1/400/300" },
-    { "id": "room_cairo_02", "city": "القاهرة", "title": "استوديو قرب وسط البلد", "pricePerNight": 450, "capacity": 2, "imageUrl": "https://picsum.photos/seed/roomcairo2/400/300" },
-    { "id": "room_cairo_03", "city": "القاهرة", "title": "جناح عائلي في التجمع الخامس", "pricePerNight": 1200, "capacity": 4, "imageUrl": "https://picsum.photos/seed/roomcairo3/400/300" },
-    { "id": "room_cairo_04", "city": "القاهرة", "title": "غرفة اقتصادية في المهندسين", "pricePerNight": 300, "capacity": 1, "imageUrl": "https://picsum.photos/seed/roomcairo4/400/300" },
-    { "id": "room_alex_01", "city": "الإسكندرية", "title": "غرفة بجانب بحر سيدي جابر", "pricePerNight": 600, "capacity": 2, "imageUrl": "https://picsum.photos/seed/roomalex1/400/300" },
-    { "id": "room_alex_02", "city": "الإسكندرية", "title": "شقة مطلية على كورنيش المنتزه", "pricePerNight": 950, "capacity": 4, "imageUrl": "https://picsum.photos/seed/roomalex2/400/300" },
-    { "id": "room_alex_03", "city": "الإسكندرية", "title": "غرفة بسيطة في العجمي", "pricePerNight": 250, "capacity": 2, "imageUrl": "https://picsum.photos/seed/roomalex3/400/300" },
-    { "id": "room_luxor_01", "city": "الأقصر", "title": "غرفة بإطلالة على المعابد", "pricePerNight": 500, "capacity": 2, "imageUrl": "https://picsum.photos/seed/roomluxor1/400/300" },
-    { "id": "room_luxor_02", "city": "الأقصر", "title": "جناح فندقي على الضفة الغربية", "pricePerNight": 780, "capacity": 3, "imageUrl": "https://picsum.photos/seed/roomluxor2/400/300" },
-    { "id": "room_luxor_03", "city": "الأقصر", "title": "غرفة نيلية وسط المدينة", "pricePerNight": 380, "capacity": 2, "imageUrl": "https://picsum.photos/seed/roomluxor3/400/300" }
+    { "id": "room_cairo_01", "city": "القاهرة", "title": "غرفة فندقية بإطلالة على النيل", "pricePerNight": 850, "capacity": 2, "imageUrl": "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=70" },
+    { "id": "room_cairo_02", "city": "القاهرة", "title": "استوديو قرب وسط البلد", "pricePerNight": 450, "capacity": 2, "imageUrl": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=70" },
+    { "id": "room_cairo_03", "city": "القاهرة", "title": "جناح عائلي في التجمع الخامس", "pricePerNight": 1200, "capacity": 4, "imageUrl": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=70" },
+    { "id": "room_cairo_04", "city": "القاهرة", "title": "غرفة اقتصادية في المهندسين", "pricePerNight": 300, "capacity": 1, "imageUrl": "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?auto=format&fit=crop&w=800&q=70" },
+    { "id": "room_alex_01", "city": "الإسكندرية", "title": "غرفة بجانب بحر سيدي جابر", "pricePerNight": 600, "capacity": 2, "imageUrl": "https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&w=800&q=70" },
+    { "id": "room_alex_02", "city": "الإسكندرية", "title": "شقة مطلية على كورنيش المنتزه", "pricePerNight": 950, "capacity": 4, "imageUrl": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=70" },
+    { "id": "room_alex_03", "city": "الإسكندرية", "title": "غرفة بسيطة في العجمي", "pricePerNight": 250, "capacity": 2, "imageUrl": "https://images.unsplash.com/photo-1560448075-bb485b067938?auto=format&fit=crop&w=800&q=70" },
+    { "id": "room_luxor_01", "city": "الأقصر", "title": "غرفة بإطلالة على المعابد", "pricePerNight": 500, "capacity": 2, "imageUrl": "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=800&q=70" },
+    { "id": "room_luxor_02", "city": "الأقصر", "title": "جناح فندقي على الضفة الغربية", "pricePerNight": 780, "capacity": 3, "imageUrl": "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=70" },
+    { "id": "room_luxor_03", "city": "الأقصر", "title": "غرفة نيلية وسط المدينة", "pricePerNight": 380, "capacity": 2, "imageUrl": "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=70" }
   ]
 }
