@@ -42,6 +42,7 @@ class AppStrings {
   // Booking.
   static const String bookButton = 'تأكيد الحجز';
   static const String nightsLabel = 'ليلات';
+  static const String perNight = 'لكل ليلة';
   static const String submittingBooking = 'جارٍ تأكيد الحجز...';
   static const String bookingSuccessTitle = 'تم تأكيد الحجز';
   static const String bookingSuccessSubtitle =
