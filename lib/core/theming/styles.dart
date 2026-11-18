@@ -3,7 +3,7 @@ import 'package:booking/core/theming/font_weight_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// Central text styles (doc_doc pattern: `font32BlueBold`-style names).
+/// Central text styles (`font32BlueBold`-style descriptive names).
 class TextStyles {
   TextStyles._();
 

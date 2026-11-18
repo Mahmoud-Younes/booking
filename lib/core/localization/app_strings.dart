@@ -75,4 +75,37 @@ class AppStrings {
   static const String errorConflictLost = 'نأسف، هذه التواريخ حُجزت للتو';
   static const String errorTransactionRetry = 'تعذر إتمام الحجز، حاول مرة أخرى';
   static const String errorUnknown = 'حدث خطأ غير متوقع، حاول مرة أخرى';
+
+  // About (the in-app project identity — any reviewer understands the
+  // project within one screen: what it is, what it does, the guarantee).
+  static const String aboutTitle = 'عن التطبيق';
+  static const String aboutAppName = 'حجوزات';
+  static const String aboutTagline =
+      'تطبيق حجز غرف فندقية — يعمل كموقع ويب وتطبيق أندرويد من قاعدة كود واحدة';
+  static const String aboutWhatTitle = 'ما هذا التطبيق؟';
+  static const String aboutWhatBody =
+      'مشروع تدريبي يحاكي تجربة مواقع الحجز العالمية: تختار المدينة وتاريخي الوصول والمغادرة وعدد الضيوف، فتشاهد نتائج البحث تتحدث مباشرة مع الأسعار، ثم تفتح صفحة الغرفة لتأكيد الحجز — وتتابع حجوزاتك أو تلغيها من «حجوزاتي» فتتحرر التواريخ فورًا للآخرين.';
+  static const String aboutGuaranteeTitle = 'الضمان الأساسي: لا حجز مزدوج';
+  static const String aboutGuaranteeBody =
+      'لو حاول مستخدمان حجز نفس الغرفة لنفس الليالات في نفس اللحظة، سينجح أحدهما فقط ويرى الآخر إشعارًا واضحًا بأن التواريخ حُجزت للتو. الضمان مطبَّق على الخادم نفسه (معاملة Firestore ذرّية + قواعد أمان Firestore) وليس في التطبيق فقط، لذلك يصمد حتى لو مُسِّس عميل — وهو مُثبت باختبار سباق تلقائي يشغّل حجزين متزامنين على المحاكي ويؤكد فوز واحدًا فقط.';
+  static const String aboutFeaturesTitle = 'أبرز الميزات';
+  static const String aboutFeatureSearch =
+      'بحث مباشر: نتائج متدفقة تتحدث لحظيًا لكل المستخدمين المتصلين';
+  static const String aboutFeatureFilters =
+      'فلترة بالسعر الأقصى وعدد الضيوف مع ترتيب تنازلي أو تصاعدي';
+  static const String aboutFeatureNights =
+      'حجز بالليل الواحد: كل ليلة مستند مستقل يُقفل لحظة الحجز';
+  static const String aboutFeatureConflict =
+      'شاشة تعارض مصممة تسمي التواريخ وتقترح بدائل بدل رسالة خطأ جافة';
+  static const String aboutFeatureCancel =
+      'إلغاء فوري يحرر الليالات ويجعلها متاحة لإعادة الحجز';
+  static const String aboutFeatureOffline =
+      'سلوك أوفلاين صادق: لا تُقفل أي ليلة قبل تأكيد الخادم';
+  static const String aboutStackTitle = 'التقنيات المستخدمة';
+  static const String aboutStackBody =
+      'Flutter (ويب + أندرويد) • Firebase Authentication وCloud Firestore • Bloc/Cubit مع freezed • get_it • flutter_screenutil — مغطاة بأكثر من 45 اختبارًا (وحدة/ويدجت/تكامل) بينها اختبار السباق الذي يثبت منع التعارض.';
+  static const String aboutReviewersTitle = 'للمراجع التقني';
+  static const String aboutReviewersBody =
+      'هيكل الميزات موحد: data (مستودعات + نماذج) / logic (Cubits وحالاتها) / ui (شاشات وويدجت)، والبنية المشتركة في core. مستند التصميم الكامل في docs/designs/، قواعد الأمان في firestore.rules، وكل محاولة حجز فاشلة تُسجَّل في مجموعة تدقيق booking_failures حتى يمكن إعادة بناء أي تعارض بعد وقوعه.';
+  static const String aboutFooter = 'مشروع تدريبي — DEPI';
 }

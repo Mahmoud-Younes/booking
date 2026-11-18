@@ -1,3 +1,4 @@
+import 'package:booking/core/helpers/extensions.dart';
 import 'package:booking/core/helpers/stay_date.dart';
 import 'package:booking/core/localization/app_strings.dart';
 import 'package:booking/core/routing/routes.dart';
@@ -88,7 +89,18 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.searchTitle)),
+      appBar: AppBar(
+        title: Text(AppStrings.searchTitle),
+        actions: [
+          // In-app project identity — one tap tells any reviewer what this
+          // app is, what it does, and the guarantee behind it.
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: AppStrings.aboutTitle,
+            onPressed: () => context.pushNamed(Routes.aboutScreen),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),

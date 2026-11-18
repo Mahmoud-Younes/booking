@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Central font-weight constants (doc_doc pattern).
+/// Central font-weight constants.
 class FontWeightHelper {
   FontWeightHelper._();
 

@@ -29,7 +29,8 @@ void main() {
       final Map<String, dynamic> r = room as Map<String, dynamic>;
       expect(r['city'], isNotEmpty);
       expect(r['title'], isNotEmpty);
-      expect(r['imageUrl'], startsWith('https://'));
+      expect(r['imageUrl'], startsWith('https://images.unsplash.com/'),
+          reason: 'rooms ship real photography, not random placeholders');
       expect((r['pricePerNight'] as num), greaterThan(0));
       expect((r['capacity'] as int), greaterThanOrEqualTo(1));
       cities.add(r['city'] as String);

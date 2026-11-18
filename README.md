@@ -50,7 +50,7 @@ FIRESTORE_EMULATOR_HOST=localhost:8080 SEED_PREFIX=dev_ node tool/seed/seed.mjs 
 GOOGLE_APPLICATION_CREDENTIALS=<service-account.json> node tool/seed/seed.mjs     # prod
 ```
 
-## Structure (doc_doc-faithful)
+## Structure
 
 ```
 lib/

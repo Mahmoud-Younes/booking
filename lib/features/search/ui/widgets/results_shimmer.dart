@@ -2,7 +2,7 @@ import 'package:booking/core/widgets/shimmer_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// Loading skeleton for the results list (shimmer, doc_doc pattern).
+/// Loading skeleton for the results list (shimmer).
 class ResultsShimmer extends StatelessWidget {
   const ResultsShimmer({super.key});
 

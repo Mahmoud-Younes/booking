@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Navigation extensions (doc_doc pattern) — named routes only.
+/// Navigation extensions — named routes only.
 extension NavigationExtension on BuildContext {
   void pushNamed(String routeName, {Object? arguments}) =>
       pushNamedAndRemoveUntil(routeName, arguments: arguments, predicate: (route) => true);
