@@ -56,8 +56,26 @@ service cloud.firestore {
     // A night document may only be created inside the same transaction that
     // creates its booking, for the caller's own booking, at the path that
     // matches its epoch-day field, inside that booking's stay range.
+    //
+    // FAMILY BINDING: the booking reference must point at the SAME collection
+    // family as the night — prod nights bind to `bookings`, dev nights to
+    // `dev_bookings`. A shared function cannot know its family (rules are
+    // static text), so each family gets its own copy; pointing a dev night at
+    // the unprefixed `bookings` would read a missing document and deny EVERY
+    // dev booking.
     function isNightCreateForOwnedBooking(nightId, data) {
       let booking = getAfter(/databases/$(database)/documents/bookings/$(data.bookingId)).data;
+      return isSignedIn()
+        && data.bookingId is string
+        && data.epochDay is int
+        && data.epochDay == int(nightId)
+        && booking.userId == request.auth.uid
+        && data.epochDay >= booking.checkInEpochDay
+        && data.epochDay < booking.checkOutEpochDay;
+    }
+
+    function isNightCreateForOwnedBookingDev(nightId, data) {
+      let booking = getAfter(/databases/$(database)/documents/dev_bookings/$(data.bookingId)).data;
       return isSignedIn()
         && data.bookingId is string
         && data.epochDay is int
@@ -71,6 +89,13 @@ service cloud.firestore {
     // (cancellation). get() is safe here: the booking was committed earlier.
     function isNightDeleteForOwnedBooking(data) {
       let booking = get(/databases/$(database)/documents/bookings/$(data.bookingId)).data;
+      return isSignedIn()
+        && data.bookingId is string
+        && booking.userId == request.auth.uid;
+    }
+
+    function isNightDeleteForOwnedBookingDev(data) {
+      let booking = get(/databases/$(database)/documents/dev_bookings/$(data.bookingId)).data;
       return isSignedIn()
         && data.bookingId is string
         && booking.userId == request.auth.uid;
@@ -124,9 +149,9 @@ service cloud.firestore {
       match /nights/{nightId} {
         allow read: if isSignedIn();
         allow create: if resource == null
-          && isNightCreateForOwnedBooking(nightId, request.resource.data);
+          && isNightCreateForOwnedBookingDev(nightId, request.resource.data);
         allow update: if false;
-        allow delete: if isNightDeleteForOwnedBooking(resource.data);
+        allow delete: if isNightDeleteForOwnedBookingDev(resource.data);
       }
     }
 
