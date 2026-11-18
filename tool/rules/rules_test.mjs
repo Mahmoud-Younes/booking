@@ -86,6 +86,33 @@ const SCENARIOS = [
     },
   },
   {
+    name: 'dev family: the owner CAN create nights bound to their own dev_bookings doc',
+    fn: async () => {
+      // Regression pin: a dev night must read its booking from dev_bookings —
+      // pointing at the unprefixed family reads a missing document and would
+      // deny every dev booking.
+      const db = testEnv.authenticatedContext('dev_owner').firestore();
+      const bookingRef = db.collection('dev_bookings').doc();
+      await bookingRef.set({
+        userId: 'dev_owner',
+        roomId: 'dev_room_y',
+        checkIn: new Date('2027-02-01'),
+        checkOut: new Date('2027-02-03'),
+        checkInEpochDay: epochDay('2027-02-01'),
+        checkOutEpochDay: epochDay('2027-02-03'),
+        status: 'active',
+        policyVersion: 1,
+        schemaVersion: 1,
+      });
+      await assertSucceeds(
+        db.collection('dev_rooms/dev_room_y/nights').doc(String(epochDay('2027-02-01'))).set({
+          bookingId: bookingRef.id,
+          epochDay: epochDay('2027-02-01'),
+        }),
+      );
+    },
+  },
+  {
     name: 'a night doc CANNOT be created when it already exists (no double booking)',
     fn: async () => {
       const dbA = testEnv.authenticatedContext('owner_a').firestore();

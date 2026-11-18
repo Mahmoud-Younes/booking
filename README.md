@@ -1,66 +1,95 @@
-# Booking — حجوزات
+# حجوزات — Booking
 
-A training (DEPI) hotel-booking project built as ONE Flutter codebase for Android + Web, whose core deliverable is a Booking.com-style search with a **server-enforced, race-tested, no-double-booking guarantee**.
+**A hotel-room booking app: one Flutter codebase shipping Web + Android, with a server-enforced, race-tested, no-double-booking guarantee.** DEPI training project.
 
-- Design document: [docs/designs/booking_search_conflict_free_engine.md](docs/designs/booking_search_conflict_free_engine.md)
-- Firebase project: `sahety-ba784` (new app registrations only: Android `com.example.booking`, Web)
+<p align="center">
+  <img src="docs/images/04_results.png" width="720" alt="live search results with real room photos">
+</p>
 
-## Core guarantee
+## What it does
 
-Availability is one Firestore document per room per night (`rooms/{roomId}/nights/{epochDay}` with `{bookingId, epochDay}`). A booking is a single `runTransaction` that reads every requested night, aborts on any existing night (`conflictLost`), and creates the booking + night documents atomically. `firestore.rules` allows night creates only when the document does not exist and the caller owns the referenced booking — so exactly one of two concurrent bookings wins, even from a modified client.
+| | |
+|---|---|
+| 🔎 **Live search** | rooms stream by city, guest capacity, price sort, max-price filter |
+| 🛡 **No double booking** | one atomic Firestore transaction + security rules — two clients racing for the same night get exactly one winner, even from a modified client |
+| 📅 **Real availability** | one Firestore document per room per night (`rooms/{roomId}/nights/{epochDay}`) |
+| 🌐 **Arabic RTL** | full RTL UI, localized validation + a typed error taxonomy (no raw Firebase strings in the UI) |
+| 🔁 **Honest offline** | `offlinePending` means no night was taken; retry re-validates server-side |
 
-> Implementation note: night document paths use the integer **epoch day** instead of the design draft's `yyyy-MM-dd` so the rules can verify path ↔ field agreement with `int()` and enforce the stay-range binding server-side (the string form is not parseable in rules).
+**Try the app**: any reviewer can open «عن التطبيق» (info icon in the app bar, or the link on the login screen) — it explains the whole project in Arabic within one screen.
 
-## Run
+## Screens
+
+| Search | Confirm |
+|---|---|
+| ![search form](docs/images/03_search_filled.png) | ![booking confirm](docs/images/06_confirm.png) |
+| **Success** | **My bookings** |
+| ![success](docs/images/07_success.png) | ![my bookings](docs/images/08_mybookings.png) |
+
+| Login (entry + About link) | About (project identity, pre-login) |
+|---|---|
+| ![login](docs/images/01_login.png) | ![about](docs/images/09_about.png) |
+
+## The guarantee — how two racing bookings end with one winner
+
+```mermaid
+sequenceDiagram
+    participant A as Client A & B
+    participant T as runTransaction (repo)
+    participant F as Firestore + rules
+    A->>T: book(room, check-in, check-out)
+    T->>F: read EVERY requested night
+    F-->>T: any night exists? → abort (conflictLost screen)
+    T->>F: create booking + all night docs atomically
+    Note over F: rules allow a night create only when the document does not exist and it belongs to the caller's own booking range
+```
+
+The rules are the second defense line: the same invariant enforced server-side, so exactly one transaction commits. The full engine design lives in [docs/designs/booking_search_conflict_free_engine.md](docs/designs/booking_search_conflict_free_engine.md).
+
+## Run it
 
 ```bash
 flutter pub get
 
-# Android (dev flavor: dev_-prefixed collections)
-flutter run -t lib/main_development.dart
-
-# Web (path-based URLs via the SPA rewrite in firebase.json)
+# Web (dev flavor: dev_-prefixed collections)
 flutter run -d chrome -t lib/main_development.dart
+
+# Android
+flutter run -t lib/main_development.dart
 ```
+
+Demo login for the dev environment: **demo@booking.dev / Demo1234!**
+Firebase project: `sahety-ba784` (this booking app registers its own Android `com.example.booking` + Web app; pre-existing registrations in the shared project are never touched).
 
 ## Tests
 
 ```bash
-flutter analyze
-dart run build_runner build --delete-conflicting-outputs   # codegen freshness
-flutter test                                               # unit + widget + fake-backed repo tests
+flutter analyze && flutter test          # 46 unit + widget + fake-backed repo tests
 
-# Rules suite (emulator; Java 11+ required)
-cd tool/rules && npm install
-firebase emulators:start --only firestore   # in another terminal
-cd tool/rules && npm test
+# Rules scenarios (second defense line) — Java 21+ for the emulator
+cd tool/rules && firebase emulators:exec --only firestore "npm test"
 
-# Race test (the core-requirement gate; Android emulator + Firestore emulator)
-firebase emulators:start --only firestore,auth
+# The race gate: two concurrent transactions, one winner (Android emulator)
 FIRESTORE_EMULATOR_HOST=localhost:8080 SEED_PREFIX=dev_ node tool/seed/seed.mjs
-flutter test integration_test/booking_race_test.dart -d <android-emulator>
+flutter test integration_test/booking_race_test.dart -d <device>
 ```
 
-## Seeding
-
-Rooms are client-read-only by the rules — the catalog is seeded through the Admin SDK (bypasses rules by design):
-
-```bash
-FIRESTORE_EMULATOR_HOST=localhost:8080 SEED_PREFIX=dev_ node tool/seed/seed.mjs   # dev
-GOOGLE_APPLICATION_CREDENTIALS=<service-account.json> node tool/seed/seed.mjs     # prod
-```
+The room catalog is client-read-only by the rules — seeding goes through the Admin SDK (or an emulator): `SEED_PREFIX=dev_ node tool/seed/seed.mjs`.
 
 ## Structure
 
 ```
 lib/
-├── core/          di, routing, theming, helpers (StayDate, FirestorePaths,
-│                  Strings), error (Result/FailureCode/mapper), observability
+├── core/          di, routing, theming, StayDate, FirestorePaths, error taxonomy
 └── features/
-    ├── auth/          data/{models,repos} + logic/cubit + ui
-    ├── search/        home + live results (stream cubit)
+    ├── auth/          login + sign-up (terminal-action cubit)
+    ├── search/        home form + live results (stream cubit)
     ├── room_details/  one-shot load + night multi-get availability check
     └── booking/       transaction engine + confirm/conflict/my-bookings
 ```
 
-Two cubit kinds, never mixed: stream cubits (`connecting/live/empty/failure` with immutable lists) for Firestore streams; terminal action cubits (`idle/submitting/.../failure`) for booking/auth/cancel. `offlinePending` is the honest connectivity outcome — no nights were taken, retry re-validates server-side.
+Two cubit kinds, never mixed: **stream cubits** (`connecting/live/empty/failure`) for Firestore streams, **terminal-action cubits** (`idle/submitting/…/failure`) for auth/booking/cancel.
+
+---
+
+<p align="center">مشروع تدريبي — DEPI · Flutter · Firebase</p>
