@@ -11,8 +11,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 /// Auth I/O boundary — the only place Firebase Auth is touched.
 ///
 /// Session source of truth is FirebaseAuth's own persistence via
-/// `authStateChanges` (no manual uId copies in SharedPreferences — the
-/// `social` precedent drifts from reality).
+/// `authStateChanges` (no manual uId copies in SharedPreferences —
+/// copied session state drifts from reality).
 class AuthRepo {
   AuthRepo(this._auth, this._db, this._paths);
 

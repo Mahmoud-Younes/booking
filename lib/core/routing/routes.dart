@@ -1,4 +1,4 @@
-/// Route name constants (doc_doc pattern: plain string routes).
+/// Route name constants (plain string routes).
 class Routes {
   Routes._();
 
@@ -10,4 +10,5 @@ class Routes {
   static const String bookingConfirmScreen = '/bookingConfirmScreen';
   static const String conflictScreen = '/conflictScreen';
   static const String myBookingsScreen = '/myBookingsScreen';
+  static const String aboutScreen = '/aboutScreen';
 }

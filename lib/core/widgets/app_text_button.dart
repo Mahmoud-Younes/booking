@@ -2,7 +2,7 @@ import 'package:booking/core/theming/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// Shared styled text button (doc_doc pattern).
+/// Shared styled text button.
 class AppTextButton extends StatelessWidget {
   const AppTextButton({
     super.key,

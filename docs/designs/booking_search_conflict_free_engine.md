@@ -10,7 +10,7 @@
 
 A training project for the DEPI program: one Flutter codebase running on Android and Web that implements the core of a hotel-booking product. The screen that matters is a Booking.com-style search: the user picks a destination city, check-in and check-out dates, and a guest count, applies a small filter set, and sees a live list of rooms with prices streamed from Firestore. The defining requirement of the project is that booking conflicts never happen: when several users try to book the same room for overlapping dates at the same moment, exactly one booking succeeds, and every connected user sees availability converge to the truth within one snapshot.
 
-The code structure follows the `doc_doc` reference project (`features/<name>/{data,logic,ui}`, Cubit + freezed states, get_it, named routes). The Firebase state variety follows the `social` reference project (Loading / WithData / NoData / Failure), re-shaped into `doc_doc`'s layered structure through repositories. Conflict prevention is server-enforced with per-night availability documents (`rooms/{roomId}/nights/{yyyy-MM-dd}`), a Firestore transaction per booking, and `firestore.rules` as the second defense line.
+The code structure is feature-first and layered (`features/<name>/{data,logic,ui}`, Cubit + freezed states, get_it, named routes), with repositories as the only Firestore I/O boundary. Stream-backed screens use a stream-state contract (connecting / live / empty / failure) while user actions use terminal states (idle / submitting / success / failure) — the two cubit kinds are never mixed. Conflict prevention is server-enforced with per-night availability documents (`rooms/{roomId}/nights/{yyyy-MM-dd}`), a Firestore transaction per booking, and `firestore.rules` as the second defense line.
 
 ## The Problem
 
@@ -18,7 +18,7 @@ Two users booking the same room for overlapping dates is the failure this projec
 
 *   A plain read-then-write (`get()` then `set()`) lets two simultaneous clients both read "free" and both write "booked" — a double booking with no error raised.
 *   Firestore security rules cannot run queries, so a flat `bookings` collection cannot be protected by rules: rules cannot ask "does any existing booking overlap these dates?".
-*   Dates stored as strings or local-clock values (the `social` reference stores `DateTime.now().toString()`) break the overlap comparison itself: two devices can derive different meanings for the same night, and the system can conclude two bookings do not overlap when they do.
+*   Dates stored as strings or local-clock values (e.g. persisting `DateTime.now().toString()`) break the overlap comparison itself: two devices can derive different meanings for the same night, and the system can conclude two bookings do not overlap when they do.
 
 The proposed solution removes client honesty from the equation. Availability is stored as one document per room per night. A booking is a single Firestore transaction that creates exactly the night documents for the requested range plus one human-readable booking document. Rules only allow creating a night document that does not exist yet, so two concurrent bookings collide on the same document ID and the transaction engine picks exactly one winner — even if a client is modified or malicious, because rules run for transactions too. The search screen streams query-scoped snapshots so availability updates live for everyone, and every failed attempt is recorded to an audit collection so the guarantee is provable after the fact.
 
@@ -26,7 +26,7 @@ The proposed solution removes client honesty from the equation. Availability is 
 
 *   **G1 — Conflict-free booking, proven.** Two concurrent bookings for the same room with overlapping dates produce exactly one success and one typed rejection, demonstrated by an integration test against the Firestore emulator before any booking UI is built.
 *   **G2 — Live search results.** The results screen streams rooms matching destination city, date window, guest count, and filters (capacity, max price, sort) from Firestore; a booking made by any user updates every connected user's list within one snapshot.
-*   **G3 — Reference-faithful structure.** Code layout, naming, DI, routing, and theming follow `doc_doc`; the Firestore state variety follows `social`'s, delivered through repositories with the two-cubit contract (stream states for streams, terminal states for actions).
+*   **G3 — Layered, feature-first structure.** Code layout, naming, DI, routing, and theming stay consistent under one convention: features own `data`/`logic`/`ui`, repositories are the only I/O boundary, and the two-cubit contract is kept (stream states for streams, terminal states for actions).
 *   **G4 — Provable audit trail.** Every booking carries `userId`, `roomId`, `checkIn`, `checkOut`, `createdAt`, `status`, `policyVersion`; every failed attempt writes a best-effort record to `booking_failures` with a typed failure code, so any race is reconstructible from the console.
 *   **G5 — Arabic-first UX without raw errors.** Arabic-only RTL interface with all strings in one file; every Firebase error code is mapped to an Arabic message at the repo/cubit boundary; the conflict moment gets a designed full-screen notice with recovery actions, never a bare dialog.
 *   **G6 — Web is a real target.** The same codebase reaches the home screen on Chrome before features are built; search parameters live in the URL so refresh and shared links reproduce results; a breakpoint shell keeps web from rendering as a magnified phone.
@@ -41,7 +41,7 @@ The proposed solution removes client honesty from the equation. Availability is 
 *   Search-as-you-type, fuzzy search, or any client-side search service — the "search engine" is one Firestore compound query.
 *   Pagination beyond a `limit()` on the results query.
 *   Client-side caching layers beyond Firestore's built-in offline persistence.
-*   Abstract repository interfaces or a use-case/domain layer — `doc_doc` has none; the pure overlap function plus constructor injection is the minimal test seam.
+*   Abstract repository interfaces or a use-case/domain layer — concrete repos with constructor injection are the minimal test seam; the pure overlap function carries the logic.
 *   A hand-built calendar widget — framework `showDatePicker` calls only.
 *   An adults/children/rooms triple selector — one guests stepper.
 *   Analytics, dashboards, alerting, or Cloud Functions.
@@ -99,7 +99,7 @@ None remain. OQ1 (crash reporting) and OQ2 (dev/prod isolation) were resolved by
 *   **Crash reporting — OQ1 resolved by author:** `firebase_crashlytics` wired for Android only, with the Flutter Web gap accepted in writing here: web gets structured logging via `PlatformDispatcher.onError`, never Crashlytics.
 *   **Firebase project identity — corrected by author (2026-11-18):** the single Firebase project is `sahety-ba784` (console project name: "firebase", project number 737811383840). A **new** Android app is registered in it for this booking project with package `com.example.booking` — the Flutter project's default `applicationId`, so `android/app/build.gradle` needs no change — plus a **new** Web app for the web target. Pre-existing app registrations in the project (such as `com.example.e_commerce_app`) are not touched by this design.
 
-### Layered Architecture (doc_doc-faithful)
+### Layered Architecture
 
 ```text
 ┌──────────────────────────────────────────────────────────────────┐
@@ -132,13 +132,13 @@ None remain. OQ1 (crash reporting) and OQ2 (dev/prod isolation) were resolved by
 | `SearchRepo` | repository | exposes a cold `Stream<List<Room>>` getter `watchRooms(SearchQuery)` built from a compound Firestore query + `.snapshots()`; never calls `.listen` |
 | `BookingCubit` | action cubit | terminal shape: `idle / submitting / offlinePending / bookingSuccess / bookingConflict / bookingFailure(code)`; `offlinePending` fires when the transaction fails with a connectivity code — the UI states plainly that no nights were taken and offers retry; retry re-runs the transaction, which re-validates server-side (offline-pending contract from the concepts brief); owns no stream |
 | `BookingRepo` | repository | `attemptBooking(...)` runs the transaction and returns a typed outcome (`success`, `conflictLost`, `ruleDenied`, ...); `cancelBooking(...)` frees nights transactionally; writes best-effort `booking_failures` records outside the transaction |
-| `AuthCubit` | action cubit | login/register/logout with terminal states; session source of truth is FirebaseAuth's own persistence via `authStateChanges` (no manual `uId` copies in SharedPreferences — the `social` precedent drifts from reality) |
+| `AuthCubit` | action cubit | login/register/logout with terminal states; session source of truth is FirebaseAuth's own persistence via `authStateChanges` (no manual `uId` copies in SharedPreferences — copied session state drifts from reality) |
 | `AuthRepo` | repository | email/password flows; writes the user profile document on registration |
 | `MyBookingsCubit` | stream cubit | live list of the signed-in user's bookings, same stream-cubit contract |
 | `StayDate` (core) | pure utility | UTC `yyyy-MM-dd` value + `nightsBetween` + the half-open overlap predicate; zero Flutter/Firebase imports; all persistence and comparisons go through it |
 | `FirestorePaths` (core) | pure utility | every collection/document path in one class; applies the dev prefix from `Env` |
 | `FirebaseErrorMapper` (core) | mapper | `FirebaseException` code → typed enum (`authRequired`, `networkUnavailable`, `ruleDenied`, `conflictLost`, `transactionRetryExhausted`, `unknown`) → one Arabic string from the strings file |
-| Router (core) | extended doc_doc router | named routes; each route has one typed argument class cast once; results route parses URL query parameters; unknown/null args → load-from-ID path |
+| Router (core) | named-route generator | named routes; each route has one typed argument class cast once; results route parses URL query parameters; unknown/null args → load-from-ID path |
 
 ### Firestore Data Model
 
@@ -239,23 +239,23 @@ While a new query loads, the UI keeps the previous list visible dimmed (CUJ 4). 
 *   **Cons**: Adds a backend runtime, deployment step, and latency; an operational single point of failure; sits outside the Flutter/Firestore learning goals of a training project.
 *   **Reason for Rejection**: Rejected during brainstorm: rules plus per-night documents reach the same guarantee inside the platform already in use, with no backend to operate.
 
-### Alternative C: social-style Firestore calls directly inside Cubits
+### Alternative C: Firestore calls directly inside Cubits
 
-*   **Pros**: Fastest to write; no repo layer to maintain; matches the `social` reference exactly.
-*   **Cons**: Contradicts the author-resolved `doc_doc` layering; untestable without a live database; the reference leaks stream subscriptions (`layout_cubit.dart:522`) and stacks listeners across screens; raw Firebase strings reach the UI.
-*   **Reason for Rejection**: Rejected by author: structure must follow `doc_doc`; the leaked-listener mechanics would duplicate live lists and crash closed cubits here.
+*   **Pros**: Fastest to write; no repo layer to maintain; the fewest moving parts.
+*   **Cons**: Contradicts the layered structure (repositories as the only I/O boundary); untestable without a live database; UI-bound cubits tend to leak stream subscriptions and stack listeners across screens; raw Firebase strings reach the UI.
+*   **Reason for Rejection**: Rejected by author: repositories stay the only I/O boundary; the leaked-listener mechanics would duplicate live lists and crash closed cubits here.
 
 ### Alternative D: Uniform Loading/WithData/NoData/Failure states on every Cubit
 
-*   **Pros**: One mental model for all states; mirrors the `social` state variety literally.
+*   **Pros**: One mental model for all states; a single uniform shape to memorize.
 *   **Cons**: Forces dead states (a booking action cubit can never produce NoData); terminal shapes wipe live data on stream screens; teaches the wrong convention.
 *   **Reason for Rejection**: Rejected during brainstorm: "a Cubit's state set is exactly what its data source can produce" — two cubit kinds instead.
 
-### Alternative E: Hand-written `fromJson`/`toMap` models (social style)
+### Alternative E: Hand-written `fromJson`/`toMap` models
 
 *   **Pros**: Zero build_runner runs; no generated files to commit; models stay small.
-*   **Cons**: The social precedent produced silent-null bugs (every field nullable, no defaults, asymmetric `fromJson`/`toMap`); map shape duplicated wherever a query is built; no compile-time safety on renames.
-*   **Reason for Rejection**: Rejected by author: `doc_doc`'s codegen style with freezed + json_serializable and `withConverter` carrying the map shape in exactly one place; document IDs taken from `doc.id` at the converter boundary, never from the map.
+*   **Cons**: Hand-written maps tend toward silent-null bugs (every field nullable, no defaults, asymmetric `fromJson`/`toMap`); map shape duplicated wherever a query is built; no compile-time safety on renames.
+*   **Reason for Rejection**: Rejected by author: codegen (freezed + json_serializable) with `withConverter` carrying the map shape in exactly one place; document IDs taken from `doc.id` at the converter boundary, never from the map.
 
 ### Alternative F: Hotels + rooms two-collection model
 
@@ -290,14 +290,14 @@ While a new query loads, the UI keeps the previous list visible dimmed (CUJ 4). 
 ### Alternative K: No crash reporting at all (silent omission)
 
 *   **Pros**: Zero dependencies and wiring.
-*   **Cons**: Neither reference project has any crash reporting; silently omitting it leaves Android crashes invisible and unaggregated.
+*   **Cons**: Silently omitting observability leaves Android crashes invisible and unaggregated.
 *   **Reason for Rejection**: Rejected by author during drafting (2026-11-17): Crashlytics on Android with the documented web gap — the decision is written down instead of omitted.
 
 --------------------------------------------------------------------------------
 
 ## Detailed Implementation Plan
 
-One unified list, grouped by the staging order; each stage gates the next. All paths relative to the repository root. Generated files (`.g.dart`, `.freezed.dart`) are created by `build_runner` next to their sources and committed, per the `doc_doc` precedent.
+One unified list, grouped by the staging order; each stage gates the next. All paths relative to the repository root. Generated files (`.g.dart`, `.freezed.dart`) are created by `build_runner` next to their sources and committed.
 
 ### Stage 1 — Firebase foundation (gates everything)
 
@@ -308,7 +308,7 @@ One unified list, grouped by the staging order; each stage gates the next. All p
 5. `android/app/google-services.json` (Create, generated) — FlutterFire CLI output for the newly registered package `com.example.booking`; required for Android builds.
 6. `lib/main_development.dart` (Create) — Entry point selecting dev environment (`Env.dev`: `dev_` prefix, debug logging level, no Crashlytics), runs `WidgetsFlutterBinding.ensureInitialized`, `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)`, `setupGetIt()`, `ScreenUtil.ensureScreenSize()`, Crashlytics wiring only `if (!kIsWeb && Platform.isAndroid)`, then `runApp(BookingApp(...))`. Replaces the default counter `main.dart`.
 7. `lib/main_production.dart` (Create) — Identical shape with `Env.prod` (no prefix, Crashlytics on Android, info logging). `lib/main.dart` (Delete) — the Flutter default counter app is removed.
-8. `lib/booking_app.dart` (Create) — `MaterialApp` with RTL `Directionality`, `ScreenUtilInit(designSize: 375x812, minTextAdapt: true)` wrapped in `BreakpointShell`, `onGenerateRoute: appRouter.generateRoute`, `initialRoute` from `authStateChanges` (logged-in → home, else login). The `doc_app.dart` analog.
+8. `lib/booking_app.dart` (Create) — `MaterialApp` with RTL `Directionality`, `ScreenUtilInit(designSize: 375x812, minTextAdapt: true)` wrapped in `BreakpointShell`, `onGenerateRoute: appRouter.generateRoute`, `initialRoute` from `authStateChanges` (logged-in → home, else login).
 
 ### Stage 2 — Core utilities (pure, testable before any feature)
 
@@ -317,13 +317,13 @@ One unified list, grouped by the staging order; each stage gates the next. All p
 11. `lib/core/helpers/stay_date.dart` (Create) — Pure `StayDate` (UTC `yyyy-MM-dd`), `nightsBetween`, `StayDateRange`, and the half-open overlap predicate `[checkIn, checkOut)`. Zero Flutter/Firebase imports — the whole date contract of the design lives here.
 12. `test/core/helpers/stay_date_test.dart` (Create) — Boundary tests: equal check-ins, equal check-outs, adjacent ranges (checkout day sellable), inverted ranges, 30-night maximum, midnight normalization.
 13. `lib/core/error/failure_code.dart` (Create) — Typed enum: `authRequired`, `networkUnavailable`, `ruleDenied`, `conflictLost`, `transactionRetryExhausted`, `unknown`; carries the raw Firebase code alongside.
-14. `lib/core/error/result.dart` (Create) — Freezed `Result<T>` (`success(data)` / `failure(BookingFailure)`) — the `doc_doc` `ApiResult` shape adapted from Dio to Firestore; `BookingFailure` holds `FailureCode` + raw code.
+14. `lib/core/error/result.dart` (Create) — Freezed `Result<T>` (`success(data)` / `failure(BookingFailure)`) — a success/failure envelope every action repo method returns and the cubit unwraps; `BookingFailure` holds `FailureCode` + raw code.
 15. `lib/core/error/firebase_error_mapper.dart` (Create) — Maps `FirebaseException` codes and transaction aborts to `FailureCode`; the single place where raw Firebase errors are interpreted, so none ever reach the UI.
-16. `lib/core/theming/colors.dart`, `lib/core/theming/styles.dart`, `lib/core/theming/font_weight_helper.dart` (Create) — `ColorsManager` and `TextStyles` static styles with `.sp`, `doc_doc` shapes with a Booking-like palette.
+16. `lib/core/theming/colors.dart`, `lib/core/theming/styles.dart`, `lib/core/theming/font_weight_helper.dart` (Create) — `ColorsManager` and `TextStyles` static styles with `.sp` and a Booking-like palette.
 17. `lib/core/helpers/spacing.dart`, `lib/core/helpers/extensions.dart`, `lib/core/helpers/app_regex.dart`, `lib/core/helpers/constants.dart` (Create) — `verticalSpace`/`horizontalSpace`, navigation extensions (`pushNamed`, `pushReplacementNamed`, `pushNamedAndRemoveUntil`, `pop`), validators, and constants (`maxStayNights = 30`, `resultsLimit = 50`, cache keys).
 18. `lib/core/localization/app_strings.dart` (Create) — Every Arabic UI string as a constant, including mapped failure messages; the only place UI text exists.
 19. `lib/core/observability/logger.dart`, `lib/core/observability/app_bloc_observer.dart` (Create) — One structured-logging format for both platforms; `BlocObserver` logging transitions/errors; wired in both entry points.
-20. `lib/core/widgets/app_text_button.dart`, `lib/core/widgets/app_text_form_field.dart` (Create) — Shared styled widgets from the `doc_doc` pattern.
+20. `lib/core/widgets/app_text_button.dart`, `lib/core/widgets/app_text_form_field.dart` (Create) — Shared styled widgets used by every form.
 21. `lib/core/widgets/empty_state_view.dart`, `lib/core/widgets/failure_retry_card.dart`, `lib/core/widgets/shimmer_box.dart` (Create) — The designed loading/empty/failure pieces every screen reuses.
 22. `lib/core/widgets/breakpoint_shell.dart` (Create) — Centered max-width container over ScreenUtil so web reads as a page.
 23. `lib/core/di/dependency_injection.dart` (Create) — `setupGetIt(env)`: `FirebaseFirestore`/`FirebaseAuth` as lazySingletons, repos as lazySingletons, cubits as factories — stream cubits strictly factories (screen-bound).
@@ -334,7 +334,7 @@ One unified list, grouped by the staging order; each stage gates the next. All p
 
 26. `lib/features/auth/data/models/login_request_body.dart`, `lib/features/auth/data/models/sign_up_request_body.dart` (Create) — Freezed request bodies (email, password, name).
 27. `lib/features/auth/data/models/user_profile.dart` (Create) — Freezed profile model (`name`, `email`, `schemaVersion`) written to `users/{uid}` on registration; additive-only defaults in `fromJson`.
-28. `lib/features/auth/data/repos/auth_repo.dart` (Create) — `signIn`, `signUp` (create user + write profile doc), `signOut`; returns `Result<T>`; constructor-injected `FirebaseAuth` and `FirebaseFirestore`. Login and sign-up share one auth feature instead of two duplicate `doc_doc` features.
+28. `lib/features/auth/data/repos/auth_repo.dart` (Create) — `signIn`, `signUp` (create user + write profile doc), `signOut`; returns `Result<T>`; constructor-injected `FirebaseAuth` and `FirebaseFirestore`. Login and sign-up share one auth feature instead of two duplicate features.
 29. `lib/features/auth/logic/cubit/login_cubit.dart`, `lib/features/auth/logic/cubit/login_state.dart` (Create) — Terminal action cubit: `idle/loginLoading/loginSuccess/loginFailure(BookingFailure)`.
 30. `lib/features/auth/logic/cubit/sign_up_cubit.dart`, `lib/features/auth/logic/cubit/sign_up_state.dart` (Create) — Same terminal contract; profile-doc write included in the success path.
 31. `lib/features/auth/ui/screens/login_screen.dart`, `lib/features/auth/ui/screens/sign_up_screen.dart` (Create) — RTL forms with inline field validation (`app_regex`), `login_bloc_listener.dart` widget handling loading/success/error.
@@ -399,7 +399,6 @@ One unified list, grouped by the staging order; each stage gates the next. All p
 ### Additional Resources
 
 *   `concepts_brief.md` — brainstorm artifact: 7-lens Goldfish review, resolved decisions, alternatives.
-*   `concepts_context.md` — verified reference-project facts used by reviewers.
-*   Reference projects: `D:\flutter_p\omer_ahmed\doc_doc` (structure), `D:\flutter_p\abdullah_mansour\social` (Firebase approach).
+*   `concepts_context.md` — verified project-context facts used by reviewers.
 
 *Drafted with EGM*

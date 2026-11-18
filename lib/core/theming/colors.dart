@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Central color constants (doc_doc pattern: static consts on one class).
+/// Central color constants (static consts on one class).
 class ColorsManager {
   ColorsManager._();
 
