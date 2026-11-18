@@ -98,6 +98,15 @@ class _LoginScreenBody extends StatelessWidget {
                           ),
                         ],
                       ),
+                      // Discoverable before sign-in: a reviewer opening the
+                      // app learns what it is without an account.
+                      TextButton(
+                        onPressed: () => context.pushNamed(Routes.aboutScreen),
+                        child: Text(
+                          AppStrings.aboutTitle,
+                          style: TextStyles.font13BlueRegular,
+                        ),
+                      ),
                     ],
                   ),
                 ),

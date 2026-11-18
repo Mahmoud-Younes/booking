@@ -1,5 +1,6 @@
 import 'package:booking/core/routing/routes.dart';
 import 'package:booking/core/helpers/stay_date.dart';
+import 'package:booking/features/about/ui/screens/about_screen.dart';
 import 'package:booking/features/auth/ui/screens/login_screen.dart';
 import 'package:booking/features/auth/ui/screens/sign_up_screen.dart';
 import 'package:booking/core/error/failure_code.dart';
@@ -13,7 +14,7 @@ import 'package:booking/features/search/ui/screens/results_screen.dart';
 import 'package:booking/features/search/ui/widgets/results_list.dart';
 import 'package:flutter/material.dart';
 
-/// Named-route generator (doc_doc pattern, extended for web).
+/// Named-route generator, extended for web (URL query parsing).
 ///
 /// Every route casts ONE typed argument class once. URL-reachable routes
 /// (results, details) survive a null/malformed argument: the results route
@@ -56,6 +57,8 @@ class AppRouter {
         return _materialRoute(settings, const HomeScreen());
       case Routes.myBookingsScreen:
         return _materialRoute(settings, const MyBookingsScreen());
+      case Routes.aboutScreen:
+        return _materialRoute(settings, const AboutScreen());
       default:
         return null;
     }
