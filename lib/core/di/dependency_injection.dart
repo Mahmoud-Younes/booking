@@ -5,6 +5,10 @@ import 'package:booking/features/auth/logic/cubit/login_cubit.dart';
 import 'package:booking/features/auth/logic/cubit/sign_up_cubit.dart';
 import 'package:booking/features/booking/data/repos/booking_repo.dart';
 import 'package:booking/features/booking/logic/cubit/booking_cubit.dart';
+import 'package:booking/features/booking/logic/cubit/my_bookings_cubit.dart';
+import 'package:booking/features/room_details/data/repos/room_details_repo.dart';
+import 'package:booking/features/search/data/repos/search_repo.dart';
+import 'package:booking/features/search/logic/cubit/search_cubit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
@@ -32,4 +36,11 @@ void setupGetIt(Env env) {
   // Booking engine.
   getIt.registerLazySingleton<BookingRepo>(() => BookingRepo(getIt(), getIt()));
   getIt.registerFactory<BookingCubit>(() => BookingCubit(getIt()));
+  getIt.registerFactory<MyBookingsCubit>(() => MyBookingsCubit(getIt()));
+
+  // Search + room details.
+  getIt.registerLazySingleton<SearchRepo>(() => SearchRepo(getIt(), getIt()));
+  getIt.registerFactory<SearchCubit>(() => SearchCubit(getIt()));
+  getIt.registerLazySingleton<RoomDetailsRepo>(
+      () => RoomDetailsRepo(getIt(), getIt()));
 }

@@ -8,5 +8,6 @@ class Routes {
   static const String resultsScreen = '/resultsScreen';
   static const String roomDetailsScreen = '/roomDetailsScreen';
   static const String bookingConfirmScreen = '/bookingConfirmScreen';
+  static const String conflictScreen = '/conflictScreen';
   static const String myBookingsScreen = '/myBookingsScreen';
 }

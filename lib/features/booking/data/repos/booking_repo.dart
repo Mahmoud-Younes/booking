@@ -120,6 +120,18 @@ class BookingRepo {
     }
   }
 
+  /// Live list of the user's bookings, newest first (cold stream).
+  Stream<List<Booking>> watchMyBookings(String userId) {
+    return _db
+        .collection(_paths.bookings())
+        .withBookingConverter()
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((QuerySnapshot<Booking> snapshot) =>
+            snapshot.docs.map((DocumentSnapshot<Booking> doc) => doc.data()!).toList());
+  }
+
   /// Best-effort audit write OUTSIDE the transaction, errors ignored: the
   /// guarantee is proven by server-committed state alone; this trail exists
   /// so a lost race is reconstructible from the console.
