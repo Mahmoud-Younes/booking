@@ -1,0 +1,51 @@
+# CI floor per the resolved scope: static analysis, codegen freshness, and
+# the Flutter test suite (unit/widget/fake-backed integration), plus the
+# rules suite under the emulator. The booking race test is a LOCAL Stage-5
+# gate (Android emulator) and intentionally does not run here.
+name: ci
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - "lib/**"
+      - "test/**"
+      - "firestore.rules"
+      - "firestore.indexes.json"
+      - "pubspec.yaml"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - name: Static analysis
+        run: flutter analyze
+      - name: Codegen freshness
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          git diff --exit-code -- '*.g.dart' '*.freezed.dart' || (echo "Generated files are stale — run build_runner and commit" && exit 1)
+      - name: Tests (unit/widget/fake-backed)
+        run: flutter test
+
+  rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: npm --prefix tool/rules install
+      - name: Rules suite under the emulator
+        run: npx firebase-tools@latest emulators:exec --only firestore --project rules-test-booking "npm --prefix tool/rules test"
