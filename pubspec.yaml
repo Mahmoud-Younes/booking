@@ -1,5 +1,9 @@
 name: booking
-description: "A new Flutter project."
+description: >-
+  Hotel booking app — one Flutter codebase shipping web + Android: live room
+  search with a server-enforced no-double-booking guarantee (atomic Firestore
+  transaction + security rules, proven by a concurrency race test).
+  DEPI training project.
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
