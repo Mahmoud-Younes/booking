@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:booking/booking_app.dart';
 import 'package:booking/core/di/dependency_injection.dart';
@@ -37,7 +36,9 @@ Future<void> main() async {
 /// Crashlytics is wired on Android only; the Flutter Web gap is an accepted,
 /// documented decision. Dev flavor is excluded by [Env.enableCrashlytics].
 void _wireCrashReporting(Env env) {
-  if (kIsWeb || !Platform.isAndroid || !env.enableCrashlytics) {
+  if (kIsWeb ||
+      defaultTargetPlatform != TargetPlatform.android ||
+      !env.enableCrashlytics) {
     return;
   }
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
