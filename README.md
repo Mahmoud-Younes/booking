@@ -3,7 +3,9 @@
 **A hotel-room booking app: one Flutter codebase shipping Web + Android, with a server-enforced, race-tested, no-double-booking guarantee.** DEPI training project.
 
 <p align="center">
-  <img src="docs/images/04_results.png" width="720" alt="live search results with real room photos">
+  <img src="docs/images/03_search_filled.png" width="250" alt="search form">
+  <img src="docs/images/04_results.png" width="250" alt="live results with real room photos">
+  <img src="docs/images/07_success.png" width="250" alt="booking confirmed">
 </p>
 
 ## What it does
@@ -20,15 +22,11 @@
 
 ## Screens
 
-| Search | Confirm |
-|---|---|
-| ![search form](docs/images/03_search_filled.png) | ![booking confirm](docs/images/06_confirm.png) |
-| **Success** | **My bookings** |
-| ![success](docs/images/07_success.png) | ![my bookings](docs/images/08_mybookings.png) |
-
-| Login (entry + About link) | About (project identity, pre-login) |
-|---|---|
-| ![login](docs/images/01_login.png) | ![about](docs/images/09_about.png) |
+| Search | Room details | Confirm |
+|---|---|---|
+| ![search form](docs/images/03_search_filled.png) | ![room details](docs/images/05_details.png) | ![booking confirm](docs/images/06_confirm.png) |
+| **Success** | **My bookings** | **About (pre-login identity)** |
+| ![success](docs/images/07_success.png) | ![my bookings](docs/images/08_mybookings.png) | ![about](docs/images/09_about.png) |
 
 ## The guarantee — how two racing bookings end with one winner
 
